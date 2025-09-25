@@ -1,0 +1,267 @@
+openapi: 3.0.3
+info:
+  title: Ester API
+  version: "1.0.0"
+  description: >
+    Drop-in OpenAPI-спека для HTML админки и smoke-тестов.
+    Действия выполняются через JWT Bearer (RBAC на уровне API).
+servers:
+  - url: /
+paths:
+  /providers/status:
+    get:
+      summary: Текущий статус провайдеров и активного провайдера
+      tags: [providers]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvidersStatus"
+
+  /providers/select:
+    post:
+      summary: Выбрать активного провайдера
+      tags: [providers]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderSelectRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderSelectResponse"
+
+  /ops/backup/run:
+    post:
+      summary: Запуск резервного копирования
+      tags: [ops]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Запуск выполнен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupOperationResponse"
+
+  /ops/backup/verify:
+    post:
+      summary: Проверка целостности резервной копии
+      tags: [ops]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Проверка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupOperationResponse"
+
+  /ops/backup/restore:
+    post:
+      summary: Восстановление из резервной копии
+      tags: [ops]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Восстановление выполнено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupOperationResponse"
+
+  /mem/hypothesis:
+    get:
+      summary: Список гипотез
+      tags: [memory]
+      parameters:
+        - name: topic
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Список гипотез
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Hypothesis"
+                additionalProperties: false
+    post:
+      summary: Создать гипотезу
+      tags: [memory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HypothesisCreate"
+      responses:
+        "200":
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hypothesis"
+
+  /mem/hypothesis/{id}:
+    put:
+      summary: Обновить гипотезу
+      tags: [memory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HypothesisUpdate"
+      responses:
+        "200":
+          description: Обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hypothesis"
+    delete:
+      summary: Удалить гипотезу
+      tags: [memory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                additionalProperties: true
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Hypothesis:
+      type: object
+      properties:
+        id: { type: string }
+        topic: { type: string }
+        text: { type: string }
+        score:
+          type: number
+          format: float
+      required: [id, topic, text]
+      additionalProperties: true
+
+    HypothesisCreate:
+      type: object
+      properties:
+        topic: { type: string }
+        text: { type: string }
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+      required: [topic, text]
+      additionalProperties: false
+
+    HypothesisUpdate:
+      type: object
+      properties:
+        topic: { type: string }
+        text: { type: string }
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+
+    ProvidersStatus:
+      type: object
+      properties:
+        active:
+          type: string
+          nullable: true
+        providers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              status: { type: string }
+              latency_ms:
+                type: number
+                format: float
+                nullable: true
+            additionalProperties: true
+      additionalProperties: true
+
+    ProviderSelectRequest:
+      type: object
+      properties:
+        name: { type: string }
+      required: [name]
+      additionalProperties: false
+
+    ProviderSelectResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        active: { type: string }
+      additionalProperties: true
+
+    BackupOperationResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        op:
+          type: string
+          description: run|verify|restore
+        trace_id: { type: string }
+      additionalProperties: true
