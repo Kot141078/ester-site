@@ -12,7 +12,7 @@
   <p><a id='buy-team'     href='#'>Buy Team Monthly</a></p>
 
   <script>
-  fetch('payments.json')
+  fetch('payments.v3.json')
     .then(r => r.json())
     .then(cfg => {
       document.getElementById('buy-install').href = cfg.plans.pro_install;
@@ -25,3 +25,4 @@
 
 </body>
 </html>
+
