@@ -1,0 +1,27 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*.tmp
+
+# Node / frontend leftovers (even if not used now)
+node_modules/
+dist/
+build/
+.out/
+.cache/
+
+# Logs
+*.log
+
+# Secrets (never commit)
+.env
+.env.*
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
